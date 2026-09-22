@@ -10,7 +10,7 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 REPO=$(cd "$HERE/../.." && pwd)
 
 ROOT=$(mktemp -d "${TMPDIR:-/tmp}/sig-preset.XXXXXX")
-PRESETS="$ROOT/Library/Application Support/Porthole/presets"
+PRESETS="$ROOT/Library/Application Support/Mavergreen/Porthole/presets"
 install -d "$PRESETS"
 install -m 0644 "$REPO/signal-desktop.conf" "$PRESETS/signal-desktop.conf"
 [ -f "$REPO/signal-desktop.menu.json" ] && install -m 0644 "$REPO/signal-desktop.menu.json" "$PRESETS/signal-desktop.menu.json"
@@ -18,7 +18,7 @@ install -m 0644 "$REPO/signal-desktop.conf" "$PRESETS/signal-desktop.conf"
 COMPONENT_DIR=$(mktemp -d "${TMPDIR:-/tmp}/sig-pkg.XXXXXX")
 mkdir -p "$(dirname "$OUT")"
 pkgbuild --root "$ROOT" \
-    --identifier dev.modernmavericks.signal-desktop \
+    --identifier dev.mavergreen.signal-desktop \
     --version "$VERSION" \
     --scripts "$HERE/scripts" \
     --install-location / \

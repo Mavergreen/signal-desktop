@@ -7,7 +7,7 @@
     </volume-check>
     <choices-outline><line choice="default"/></choices-outline>
     <choice id="default" title="Linux Signal Desktop">
-        <pkg-ref id="dev.modernmavericks.signal-desktop"/>
+        <pkg-ref id="dev.mavergreen.signal-desktop"/>
     </choice>
-    <pkg-ref id="dev.modernmavericks.signal-desktop" version="0">mavericks-signal-desktop-component.pkg</pkg-ref>
+    <pkg-ref id="dev.mavergreen.signal-desktop" version="0">mavericks-signal-desktop-component.pkg</pkg-ref>
 </installer-gui-script>
