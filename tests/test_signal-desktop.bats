@@ -17,10 +17,10 @@ teardown() { [ -n "$WORK" ] && rm -rf "$WORK"; }
     | grep -q 'Library/Application Support/Mavergreen/Porthole/presets/signal-desktop.conf'
 }
 
-@test "the .pkg declares a 10.9 minimum" {
+@test "the .pkg declares a 10.9.5 minimum" {
   sh "$REPO/packaging/macos/build_pkg.sh" 0.0.0 "$WORK/out.pkg" >/dev/null
   pkgutil --expand "$WORK/out.pkg" "$WORK/x"
-  grep -q 'os-version min="10.9"' "$WORK/x/Distribution"
+  grep -q 'os-version min="10.9.5"' "$WORK/x/Distribution"
 }
 
 @test "preinstall refuses to install when Porthole is absent" {
