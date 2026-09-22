@@ -1,6 +1,6 @@
 # mavericks-signal-desktop
 
-A [Porthole](https://github.com/ModernMavericks/porthole) **preset** that runs Signal Desktop on
+A [Porthole](https://github.com/Mavergreen/porthole) **preset** that runs Signal Desktop on
 OS X 10.9 (Mavericks) as a native-feeling "Linux Signal Desktop.app".
 
 This repo is not a viewer build -- it ships a single parameter set (`signal-desktop.conf`). Install
