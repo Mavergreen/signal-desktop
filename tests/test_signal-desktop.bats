@@ -46,3 +46,17 @@ teardown() { [ -n "$WORK" ] && rm -rf "$WORK"; }
   grep -q 'Applications/Porthole.app' "$WORK/apps/Linux Signal Desktop.app/Contents/Resources/bin/signal-desktop"
   [ -f "$WORK/apps/Linux Signal Desktop.app/Contents/Resources/signal-desktop/Dockerfile" ]
 }
+
+# Signal keeps its database key in Electron's safeStorage, whose backend Electron picks from the
+# desktop environment. Under xpra that's "Xpra", which it doesn't recognize; left to choose, it used
+# a plaintext key, then a different desktop made it migrate the key into the GNOME keyring and the
+# next normal launch couldn't open the database (2026-09-25). Pin the backend the container provides:
+# its child script runs a passwordless gnome-keyring for exactly this.
+@test "Signal is launched with its key store pinned to the container's GNOME keyring" {
+  [ -x "$PORTHOLE_REPO/bin/porthole" ] || skip "porthole engine not available as a sibling"
+  PORTHOLE_MATERIALIZE_NO_ICON=1 "$PORTHOLE_REPO/bin/porthole" \
+    materialize "$REPO/signal-desktop.conf" --apps-dir "$WORK/apps" >/dev/null
+  ch="$WORK/apps/Linux Signal Desktop.app/Contents/Resources/signal-desktop/signal-desktop-child.sh"
+  grep -q '^exec signal-desktop .*--password-store=gnome-libsecret' "$ch" || { grep '^exec' "$ch"; return 1; }
+  grep -q 'gnome-keyring-daemon --unlock' "$ch"
+}
