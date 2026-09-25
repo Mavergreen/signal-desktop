@@ -1,3 +1,4 @@
+# platform: host-agnostic
 # build/lib.sh -- sourced helpers; the shared implementations live in shipyard, this only locates them.
 : "${MAVERICKS_ROOT:=$(cd "$(dirname "${BASH_SOURCE:-$0}")/.." 2>/dev/null && pwd || pwd)}"
 export MAVERICKS_ROOT

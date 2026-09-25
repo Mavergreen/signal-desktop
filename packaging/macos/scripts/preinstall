@@ -1,9 +1,0 @@
-#!/bin/sh
-# A Signal preset is inert without the Porthole engine, which materializes and runs the viewer.
-# The installer runs scripts as root (PATH may omit /usr/local/bin), so check both spellings.
-if [ ! -x /usr/local/bin/porthole ] && [ ! -d /Applications/Porthole.app ]; then
-  echo "mavericks-signal-desktop needs Porthole installed first (it provides the viewer engine)." >&2
-  echo "Install Porthole (https://github.com/Mavergreen/porthole), then run this installer again." >&2
-  exit 1
-fi
-exit 0

@@ -1,4 +1,5 @@
 #!/bin/sh
+# platform: host-agnostic
 # Thin wrapper over shipyard's version logic. UPSTREAM_VERSION is the Signal-Desktop version;
 # version.sh turns it into <version>-mavericks.N and decides whether to release.
 set -eu
