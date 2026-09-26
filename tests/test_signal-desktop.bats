@@ -30,17 +30,13 @@ teardown() { [ -n "$WORK" ] && rm -rf "$WORK"; }
   [ "$(/usr/libexec/PlistBuddy -c 'Print :generated:0' "$WORK/t/usr/local/mavergreen/signal-desktop/mavergreen.plist")" = "Applications/Linux Signal Desktop.app" ]
 }
 
-@test "preinstall refuses a volume without Porthole, naming it" {
-  mkdir -p "$WORK/v"
-  run env ROOT="$WORK/v" sh "$REPO/packaging/macos/preinstall-hook.sh"
-  [ "$status" -ne 0 ]
-  [[ "$output" == *"needs Porthole installed"* ]] || false
+@test "the package requires Porthole, through shipyard's generated check" {
+  grep -q -- '--requires porthole' "$REPO/packaging/macos/build_pkg.sh"
 }
 
-@test "preinstall accepts a volume with Porthole" {
-  mkdir -p "$WORK/v/usr/local/mavergreen/porthole"; : > "$WORK/v/usr/local/mavergreen/porthole/mavergreen.plist"
-  run env ROOT="$WORK/v" sh "$REPO/packaging/macos/preinstall-hook.sh"
-  [ "$status" -eq 0 ]
+@test "no hand-written requirement check is left to drift" {
+  [ ! -e "$REPO/packaging/macos/preinstall-hook.sh" ] || return 1
+  ! grep -q -- '--preinstall-hook' "$REPO/packaging/macos/build_pkg.sh" || return 1
 }
 
 @test "postinstall materializes the preset from its tree with the target volume's engine" {

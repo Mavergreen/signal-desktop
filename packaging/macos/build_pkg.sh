@@ -19,7 +19,7 @@ if [ -f "$REPO/signal-desktop.menu.json" ]; then install -m 0644 "$REPO/signal-d
 SCR=$(mktemp -d "${TMPDIR:-/tmp}/sig-scripts.XXXXXX")
 sh "$SHIPYARD/stage_product.sh" --stage "$ROOT" --product signal-desktop --name "Signal Desktop for Mavericks" \
   --version "$VERSION" --generated "Applications/Linux Signal Desktop.app" \
-  --preinstall-hook "$HERE/preinstall-hook.sh" --postinstall-hook "$HERE/postinstall-hook.sh" \
+  --requires porthole --postinstall-hook "$HERE/postinstall-hook.sh" \
   --scripts-out "$SCR"
 
 COMPONENT_DIR=$(mktemp -d "${TMPDIR:-/tmp}/sig-pkg.XXXXXX")
