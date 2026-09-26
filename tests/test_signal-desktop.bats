@@ -53,12 +53,13 @@ teardown() { [ -n "$WORK" ] && rm -rf "$WORK"; }
 
 @test "materialize turns the preset conf into Linux Signal Desktop.app" {
   [ -x "$PORTHOLE_REPO/bin/porthole" ] || skip "porthole engine not available as a sibling"
-  PORTHOLE_MATERIALIZE_NO_ICON=1 "$PORTHOLE_REPO/bin/porthole" \
+  PORTHOLE_MATERIALIZE_NO_ICON=1 PORTHOLE_ICON_CACHE="$WORK/sys-icons" PORTHOLE_USER_ICON_CACHE="$WORK/user-icons" "$PORTHOLE_REPO/bin/porthole" \
     materialize "$REPO/signal-desktop.conf" --apps-dir "$WORK/apps"
   [ -d "$WORK/apps/Linux Signal Desktop.app" ]
   [ -x "$WORK/apps/Linux Signal Desktop.app/Contents/Resources/bin/signal-desktop" ]
   grep -q 'Applications/Porthole.app' "$WORK/apps/Linux Signal Desktop.app/Contents/Resources/bin/signal-desktop"
-  [ -f "$WORK/apps/Linux Signal Desktop.app/Contents/Resources/signal-desktop/Dockerfile" ]
+  [ -f "$WORK/apps/Linux Signal Desktop.app/Contents/Resources/signal-desktop/Dockerfile" ] || return 1
+  [ "$(cat "$WORK/apps/Linux Signal Desktop.app/Contents/Resources/AppIcon.width")" = 0 ]   # no cache: the penguin
 }
 
 # Signal keeps its database key in Electron's safeStorage, whose backend Electron picks from the
@@ -68,7 +69,7 @@ teardown() { [ -n "$WORK" ] && rm -rf "$WORK"; }
 # its child script runs a passwordless gnome-keyring for exactly this.
 @test "Signal is launched with its key store pinned to the container's GNOME keyring" {
   [ -x "$PORTHOLE_REPO/bin/porthole" ] || skip "porthole engine not available as a sibling"
-  PORTHOLE_MATERIALIZE_NO_ICON=1 "$PORTHOLE_REPO/bin/porthole" \
+  PORTHOLE_MATERIALIZE_NO_ICON=1 PORTHOLE_ICON_CACHE="$WORK/sys-icons" PORTHOLE_USER_ICON_CACHE="$WORK/user-icons" "$PORTHOLE_REPO/bin/porthole" \
     materialize "$REPO/signal-desktop.conf" --apps-dir "$WORK/apps" >/dev/null
   ch="$WORK/apps/Linux Signal Desktop.app/Contents/Resources/signal-desktop/signal-desktop-child.sh"
   grep -q '^exec signal-desktop .*--password-store=gnome-libsecret' "$ch" || { grep '^exec' "$ch"; return 1; }
