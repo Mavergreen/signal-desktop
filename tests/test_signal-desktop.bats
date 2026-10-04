@@ -82,3 +82,12 @@ teardown() { [ -n "$WORK" ] && rm -rf "$WORK"; }
   grep -q '^exec signal-desktop .*--password-store=gnome-libsecret' "$ch" || { grep '^exec' "$ch"; return 1; }
   grep -q 'gnome-keyring-daemon --unlock' "$ch"
 }
+
+# The release's version goes into the installed conf, so each release changes the app's recipe and
+# its install rebuilds the Linux app with the newest package.
+@test "the installed conf names the release's version" {
+  sh "$REPO/packaging/macos/build_pkg.sh" 0.0.0 "$WORK/out.pkg" >/dev/null
+  pkgutil --expand "$WORK/out.pkg" "$WORK/x"
+  mkdir -p "$WORK/t"; (cd "$WORK/t" && gzip -dc "$WORK/x/mavericks-signal-desktop-component.pkg/Payload" | cpio -id --quiet)
+  [ "$(tail -n 1 "$WORK/t/usr/local/mavergreen/signal-desktop/share/porthole/presets/signal-desktop.conf")" = APP_VERSION=0.0.0 ]
+}

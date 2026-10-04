@@ -14,6 +14,8 @@ ROOT=$(mktemp -d "${TMPDIR:-/tmp}/sig-preset.XXXXXX")
 P="$ROOT/usr/local/mavergreen/signal-desktop/share/porthole/presets"
 install -d "$P"
 install -m 0644 "$REPO/signal-desktop.conf" "$P/signal-desktop.conf"
+# The release's version is part of the app's recipe: installing a release rebuilds the Linux app.
+printf 'APP_VERSION=%s\n' "$VERSION" >> "$P/signal-desktop.conf"
 if [ -f "$REPO/signal-desktop.menu.json" ]; then install -m 0644 "$REPO/signal-desktop.menu.json" "$P/signal-desktop.menu.json"; fi
 
 SCR=$(mktemp -d "${TMPDIR:-/tmp}/sig-scripts.XXXXXX")
