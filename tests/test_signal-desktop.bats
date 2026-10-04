@@ -91,3 +91,31 @@ teardown() { [ -n "$WORK" ] && rm -rf "$WORK"; }
   mkdir -p "$WORK/t"; (cd "$WORK/t" && gzip -dc "$WORK/x/mavericks-signal-desktop-component.pkg/Payload" | cpio -id --quiet)
   [ "$(tail -n 1 "$WORK/t/usr/local/mavergreen/signal-desktop/share/porthole/presets/signal-desktop.conf")" = APP_VERSION=0.0.0 ]
 }
+
+# A stand-in for the updater mavericks_add_updater_app builds: the identity and feed shipyard's registry
+# gives signal-desktop, which stage_product.sh checks.
+stub_updater() {
+  u="$WORK/signal-desktop-updater.app"; mkdir -p "$u/Contents/MacOS"
+  printf '#!/bin/sh\n' > "$u/Contents/MacOS/signal-desktop-updater"; chmod +x "$u/Contents/MacOS/signal-desktop-updater"
+  /usr/libexec/PlistBuddy -c 'Add :CFBundleIdentifier string dev.mavergreen.signal-desktop.updater' \
+    -c 'Add :CFBundleExecutable string signal-desktop-updater' \
+    -c 'Add :SUFeedURL string https://github.com/Mavergreen/signal-desktop/releases/latest/download/signal-desktop.xml' \
+    "$u/Contents/Info.plist" >/dev/null
+  printf '%s' "$u"
+}
+
+# Releases reach an installed preset the way Porthole's do: a daily check, then an offer to install.
+@test "with UPD_APP, the pkg carries signal-desktop's updater and its daily check" {
+  run env UPD_APP="$(stub_updater)" sh "$REPO/packaging/macos/build_pkg.sh" 0.0.0 "$WORK/out.pkg"
+  [ "$status" -eq 0 ] || { echo "$output"; return 1; }
+  pkgutil --expand "$WORK/out.pkg" "$WORK/x"
+  files="$(lsbom -s "$WORK/x/mavericks-signal-desktop-component.pkg/Bom")"
+  echo "$files" | grep -q 'Library/Application Support/Mavergreen/signal-desktop-updater.app/Contents/Info.plist$' || { echo "$files"; return 1; }
+  echo "$files" | grep -q 'updatecheck.plist$' || { echo "$files"; return 1; }
+}
+
+@test "UPD_APP naming no updater fails the build" {
+  run env UPD_APP="$WORK/nothing-here.app" sh "$REPO/packaging/macos/build_pkg.sh" 0.0.0 "$WORK/out.pkg"
+  [ "$status" -ne 0 ] || return 1
+  [[ "$output" == *"no updater .app"* ]] || false
+}
