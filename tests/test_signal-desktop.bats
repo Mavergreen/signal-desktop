@@ -39,12 +39,23 @@ teardown() { [ -n "$WORK" ] && rm -rf "$WORK"; }
   ! grep -q -- '--preinstall-hook' "$REPO/packaging/macos/build_pkg.sh" || return 1
 }
 
+# The app must exist for the install to count; only the build may be left to the first launch.
+@test "postinstall fails when the app can't be materialized" {
+  e="$WORK/v/Applications/Porthole.app/Contents/Resources/engine/bin"; mkdir -p "$e"
+  printf '#!/bin/sh\n[ "$1" = materialize ] && exit 1\nexit 0\n' > "$e/porthole"; chmod +x "$e/porthole"
+  run env ROOT="$WORK/v" sh "$REPO/packaging/macos/postinstall-hook.sh"
+  [ "$status" -ne 0 ]
+}
+
 @test "postinstall materializes the preset from its tree with the target volume's engine" {
   e="$WORK/v/Applications/Porthole.app/Contents/Resources/engine/bin"; mkdir -p "$e"
-  printf '#!/bin/sh\necho "$@" > "%s/args"\n' "$WORK" > "$e/porthole"; chmod +x "$e/porthole"
+  printf '#!/bin/sh\necho "$@" >> "%s/args"\n' "$WORK" > "$e/porthole"; chmod +x "$e/porthole"
   run env ROOT="$WORK/v" sh "$REPO/packaging/macos/postinstall-hook.sh"
   [ "$status" -eq 0 ]
-  [ "$(cat "$WORK/args")" = "materialize $WORK/v/usr/local/mavergreen/signal-desktop/share/porthole/presets/signal-desktop.conf --apps-dir $WORK/v/Applications" ]
+  c="$WORK/v/usr/local/mavergreen/signal-desktop/share/porthole/presets/signal-desktop.conf"
+  [ "$(sed -n 1p "$WORK/args")" = "materialize $c --apps-dir $WORK/v/Applications" ] || { cat "$WORK/args"; return 1; }
+  # ...then builds the app in its own window before Installer finishes (Porthole skips this on another volume).
+  [ "$(sed -n 2p "$WORK/args")" = "prepare-for-install --root $WORK/v --apps-dir $WORK/v/Applications $c" ] || { cat "$WORK/args"; return 1; }
 }
 
 @test "materialize turns the preset conf into Linux Signal Desktop.app" {
