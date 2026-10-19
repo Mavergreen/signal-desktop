@@ -13,3 +13,7 @@ tiny -- just the preset conf (`signal-desktop.conf`) + install scripts -- so mos
 The container is `UPDATE=float` (see `signal-desktop.conf`): it installs whatever Signal currently
 ships (their apt repo is latest-only), so the pin never goes stale on a user's machine. `UPSTREAM_VERSION`
 names the release for the Signal version current at release time; it does not hard-pin apt.
+
+## Conformance deviations
+
+- on-target: no 10.9 acceptance job yet; exit: a release.yml job on Mavergreen/mavericks-vm@v1 that installs this run's pkg in the guest and runs what it ships, which publish needs
