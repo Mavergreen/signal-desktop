@@ -83,6 +83,22 @@ teardown() { [ -n "$WORK" ] && rm -rf "$WORK"; }
   grep -q 'gnome-keyring-daemon --unlock' "$ch"
 }
 
+@test "an explicit Signal launch overrides the saved start-in-tray preference" {
+  PORTHOLE_MATERIALIZE_NO_ICON=1 PORTHOLE_ICON_CACHE="$WORK/sys-icons" PORTHOLE_USER_ICON_CACHE="$WORK/user-icons" "$PORTHOLE_REPO/bin/porthole" \
+    materialize "$REPO/signal-desktop.conf" --apps-dir "$WORK/apps" >/dev/null
+  mkdir -p "$WORK/bin" "$WORK/home"
+  printf '#!/bin/sh\nexit 0\n' > "$WORK/bin/gnome-keyring-daemon"
+  printf '#!/bin/sh\nprintf "%%s\\n" "$@"\n' > "$WORK/bin/signal-desktop"
+  chmod +x "$WORK/bin/gnome-keyring-daemon" "$WORK/bin/signal-desktop"
+  run env HOME="$WORK/home" PATH="$WORK/bin:$PATH" sh \
+    "$WORK/apps/Linux Signal Desktop.app/Contents/Resources/signal-desktop/signal-desktop-child.sh"
+  [ "$status" -eq 0 ]
+  # Signal's --use-tray-icon selects MinimizeToSystemTray before consulting its
+  # saved MinimizeToAndStartInSystemTray setting: retain the tray, show on launch.
+  printf '%s\n' "$output" | grep -Fx -- --use-tray-icon || return 1
+  ! printf '%s\n' "$output" | grep -Fx -- --start-in-tray || return 1
+}
+
 # The release's version goes into the installed conf, so each release changes the app's recipe and
 # its install rebuilds the Linux app with the newest package.
 @test "the installed conf names the release's version" {
