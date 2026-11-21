@@ -30,8 +30,8 @@ teardown() { [ -n "$WORK" ] && rm -rf "$WORK"; }
   [ "$(/usr/libexec/PlistBuddy -c 'Print :generated:0' "$WORK/t/usr/local/mavergreen/signal-desktop/mavergreen.plist")" = "Applications/Linux Signal Desktop.app" ]
 }
 
-@test "the package requires Porthole, through shipyard's generated check" {
-  grep -q -- '--requires porthole' "$REPO/packaging/macos/build_pkg.sh"
+@test "the package requires a Porthole that hands the app its links, through shipyard's generated check" {
+  grep -qF -- "--requires 'porthole>=20261121.1'" "$REPO/packaging/macos/build_pkg.sh"
 }
 
 @test "no hand-written requirement check is left to drift" {
@@ -134,4 +134,11 @@ stub_updater() {
   run env UPD_APP="$WORK/nothing-here.app" sh "$REPO/packaging/macos/build_pkg.sh" 0.0.0 "$WORK/out.pkg"
   [ "$status" -ne 0 ] || return 1
   [[ "$output" == *"no updater .app"* ]] || false
+}
+
+# The schemes Signal's Linux package registers: its signal-desktop.desktop has
+#   MimeType=x-scheme-handler/sgnl;x-scheme-handler/signalcaptcha;
+# so a signal.me link opens the conversation, and a registration captcha's callback reaches the app.
+@test "the app takes the URL schemes Signal's Linux package registers" {
+  [ "$( . "$REPO/signal-desktop.conf"; printf '%s' "$URL_SCHEMES")" = 'sgnl signalcaptcha' ]
 }
