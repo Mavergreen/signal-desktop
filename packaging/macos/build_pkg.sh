@@ -22,7 +22,7 @@ if [ -f "$REPO/signal-desktop.menu.json" ]; then install -m 0644 "$REPO/signal-d
 SCR=$(mktemp -d "${TMPDIR:-/tmp}/sig-scripts.XXXXXX")
 set -- --stage "$ROOT" --product signal-desktop --name "Signal Desktop for Mavericks" \
   --version "$VERSION" --generated "Applications/Linux Signal Desktop.app" \
-  --requires 'porthole>=20261121.1' --postinstall-hook "$HERE/postinstall-hook.sh" \
+  --requires 'porthole>=20261121.0' --postinstall-hook "$HERE/postinstall-hook.sh" \
   --scripts-out "$SCR"
 # The Sparkle updater (build/build-updater.sh), and its daily check: releases reach installed Macs.
 if [ -n "${UPD_APP:-}" ]; then

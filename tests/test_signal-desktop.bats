@@ -31,7 +31,7 @@ teardown() { [ -n "$WORK" ] && rm -rf "$WORK"; }
 }
 
 @test "the package requires a Porthole that hands the app its links, through shipyard's generated check" {
-  grep -qF -- "--requires 'porthole>=20261121.1'" "$REPO/packaging/macos/build_pkg.sh"
+  grep -qF -- "--requires 'porthole>=20261121.0'" "$REPO/packaging/macos/build_pkg.sh"
 }
 
 @test "no hand-written requirement check is left to drift" {
