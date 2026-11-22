@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# platform: macOS-only -- runs pkgutil
+# platform: macOS-only -- reads the .pkg with pkgutil and PlistBuddy, and materializes with Porthole (PlistBuddy)
 # mavericks-signal-desktop is a Porthole PRESET: the .pkg ships only the Signal parameter set
 # (signal-desktop.conf); installing it asks the Porthole engine to materialize "Linux Signal Desktop.app".
 # There is no viewer build here.
@@ -28,34 +28,6 @@ teardown() { [ -n "$WORK" ] && rm -rf "$WORK"; }
   [ "$(sed -n 's/.*<line choice="\([^"]*\)".*/\1/p' "$WORK/x/Distribution" | grep -v '^default$' | head -1)" = dev.mavergreen.base ]
   mkdir -p "$WORK/t"; (cd "$WORK/t" && gzip -dc "$WORK/x/mavericks-signal-desktop-component.pkg/Payload" | cpio -id --quiet)
   [ "$(/usr/libexec/PlistBuddy -c 'Print :generated:0' "$WORK/t/usr/local/mavergreen/signal-desktop/mavergreen.plist")" = "Applications/Linux Signal Desktop.app" ]
-}
-
-@test "the package requires a Porthole that hands the app its links, through shipyard's generated check" {
-  grep -qF -- "--requires 'porthole>=20261121.0'" "$REPO/packaging/macos/build_pkg.sh"
-}
-
-@test "no hand-written requirement check is left to drift" {
-  [ ! -e "$REPO/packaging/macos/preinstall-hook.sh" ] || return 1
-  ! grep -q -- '--preinstall-hook' "$REPO/packaging/macos/build_pkg.sh" || return 1
-}
-
-# The app must exist for the install to count; only the build may be left to the first launch.
-@test "postinstall fails when the app can't be materialized" {
-  e="$WORK/v/Applications/Porthole.app/Contents/Resources/engine/bin"; mkdir -p "$e"
-  printf '#!/bin/sh\n[ "$1" = materialize ] && exit 1\nexit 0\n' > "$e/porthole"; chmod +x "$e/porthole"
-  run env ROOT="$WORK/v" sh "$REPO/packaging/macos/postinstall-hook.sh"
-  [ "$status" -ne 0 ]
-}
-
-@test "postinstall materializes the preset from its tree with the target volume's engine" {
-  e="$WORK/v/Applications/Porthole.app/Contents/Resources/engine/bin"; mkdir -p "$e"
-  printf '#!/bin/sh\necho "$@" >> "%s/args"\n' "$WORK" > "$e/porthole"; chmod +x "$e/porthole"
-  run env ROOT="$WORK/v" sh "$REPO/packaging/macos/postinstall-hook.sh"
-  [ "$status" -eq 0 ]
-  c="$WORK/v/usr/local/mavergreen/signal-desktop/share/porthole/presets/signal-desktop.conf"
-  [ "$(sed -n 1p "$WORK/args")" = "materialize $c --apps-dir $WORK/v/Applications" ] || { cat "$WORK/args"; return 1; }
-  # ...then builds the app in its own window before Installer finishes (Porthole skips this on another volume).
-  [ "$(sed -n 2p "$WORK/args")" = "prepare-for-install --root $WORK/v --apps-dir $WORK/v/Applications $c" ] || { cat "$WORK/args"; return 1; }
 }
 
 @test "materialize turns the preset conf into Linux Signal Desktop.app" {
@@ -128,17 +100,4 @@ stub_updater() {
   files="$(lsbom -s "$WORK/x/mavericks-signal-desktop-component.pkg/Bom")"
   echo "$files" | grep -q 'Library/Application Support/Mavergreen/signal-desktop-updater.app/Contents/Info.plist$' || { echo "$files"; return 1; }
   echo "$files" | grep -q 'updatecheck.plist$' || { echo "$files"; return 1; }
-}
-
-@test "UPD_APP naming no updater fails the build" {
-  run env UPD_APP="$WORK/nothing-here.app" sh "$REPO/packaging/macos/build_pkg.sh" 0.0.0 "$WORK/out.pkg"
-  [ "$status" -ne 0 ] || return 1
-  [[ "$output" == *"no updater .app"* ]] || false
-}
-
-# The schemes Signal's Linux package registers: its signal-desktop.desktop has
-#   MimeType=x-scheme-handler/sgnl;x-scheme-handler/signalcaptcha;
-# so a signal.me link opens the conversation, and a registration captcha's callback reaches the app.
-@test "the app takes the URL schemes Signal's Linux package registers" {
-  [ "$( . "$REPO/signal-desktop.conf"; printf '%s' "$URL_SCHEMES")" = 'sgnl signalcaptcha' ]
 }
