@@ -15,6 +15,10 @@ The container is `UPDATE=float` (see `signal-desktop.conf`): it installs whateve
 ships (their apt repo is latest-only), so the pin never goes stale on a user's machine. `UPSTREAM_VERSION`
 names the release for the Signal version current at release time; it does not hard-pin apt.
 
+## Versioning
+
+- port
+
 ## Conformance deviations
 
 - no-standalone: a Porthole preset, which the family lists as having no standalone form. Its tree is a recipe (the preset conf and menu manifest) plus glue that names the installed tree; the app itself is generated on the Mac by the installed Porthole at install time, so an unpacked directory holds nothing that runs. Reconsider if a preset ever ships a runnable app in its payload.
